@@ -4,7 +4,7 @@
 Plugin Name: IM-porter
 Description: Import chat transcripts into WordPress.
 Author: cfinke
-Version: 0.1a
+Version: 1.0
 License: GPLv2 or later
 */
 
@@ -30,12 +30,13 @@ if ( ! class_exists( 'WP_Importer' ) ) {
  */
 if ( class_exists( 'WP_Importer' ) ) {
 	class IMporter_Import extends WP_Importer {
-		var $authors = array();
 		var $posts = array();
-		var $terms = array();
-		var $categories = array();
-		var $tags = array();
-		var $base_url = '';
+
+		var $id = null;
+		var $author = null;
+		var $status = null;
+		var $autotag = false;
+		var $category = null;
 
 		var $date = null;
 
@@ -57,6 +58,11 @@ if ( class_exists( 'WP_Importer' ) ) {
 				case 2:
 					check_admin_referer( 'import-chats' );
 					$this->id = intval( $_POST['import_id'] );
+					$this->author = (int) $_POST['author'];
+					$this->status = $_POST['status'] == 'private' ? 'private' : 'public';
+					$this->autotag = isset( $_POST['autotag'] );
+					$this->category = (int) $_POST['cat'];
+					
 					$file = get_attached_file( $this->id );
 					set_time_limit( 0 );
 					$this->import( $file );
@@ -92,25 +98,61 @@ if ( class_exists( 'WP_Importer' ) ) {
 			<form action="<?php echo admin_url( 'admin.php?import=chats&step=2' ); ?>" method="post">
 				<?php wp_nonce_field( 'import-chats' ); ?>
 				<input type="hidden" name="import_id" value="<?php echo $this->id; ?>" />
+				
+				<table class="form-table">
+					<tbody>
+						<tr>
+							<th scope="row">
+								<label><?php esc_html_e( 'Set post statuses as...', 'chat-importer' ); ?></label>
+							</th>
+							<td>
+								<label>
+									<input name="status" type="radio" value="private" checked="checked" />
+									<?php esc_html_e( 'Private', 'chat-importer' ); ?>
+								</label>
+								<label>
+									<input name="status" type="radio" value="public" />
+									<?php esc_html_e( 'Public', 'chat-importer' ); ?>
+								</label>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="chat-importer-autotag"><?php esc_html_e( 'Tag posts with participant usernames', 'chat-importer' ); ?></label>
+							</th>
+							<td>
+								<input name="autotag" type="checkbox" value="1" id="chat-importer-autotag" checked="checked" />
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								<label for="category"><?php esc_html_e( 'Import posts into Category', 'chat-importer' ) ?></label>
+							</th>
+							<td>
+								<?php wp_dropdown_categories( array(
+									'hide_empty' => false,
+									'id' => 'category',
+									'hierarchical' => true,
+									) ); ?>
+								(<a href="edit-tags.php?taxonomy=category"><?php _e( 'Add New Category', 'chat-importer' ); ?></a>)
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								<?php esc_html_e( 'Assign posts to:', 'chat-importer' ); ?>
+							</th>
+							<td>
+								<?php wp_dropdown_users( array( 'name' => 'author', 'selected' => get_current_user_id() ) ); ?>
+							</td>
+						</tr>
+					</tbody>
+				</table>
 
-				<?php if ( ! empty( $this->authors ) ) : ?>
-					<h3><?php _e( 'Assign Authors' ); ?></h3>
-					<p><?php _e( 'To make it easier for you to edit and save the imported content, you may want to reassign the author of the imported item to an existing user of this site. For example, you may want to import all the entries as <code>admin</code>s entries.' ); ?></p>
-					<?php if ( $this->allow_create_users() ) : ?>
-						<p><?php printf( __( 'If a new user is created by WordPress, a new password will be randomly generated and the new user&#8217;s role will be set as %s. Manually changing the new user&#8217;s details will be necessary.', 'chat-importer' ), esc_html( get_option('default_role') ) ); ?></p>
-					<?php endif; ?>
-					<ol id="authors">
-						<?php foreach ( $this->authors as $author ) : ?>
-							<li><?php $this->author_select( $j++, $author ); ?></li>
-						<?php endforeach; ?>
-					</ol>
-				<?php endif; ?>
-
-				<p class="submit"><input type="submit" class="button" value="<?php esc_attr_e( 'Submit', 'chat-importer' ); ?>" /></p>
+				<p class="submit"><input type="submit" class="button-primary" value="<?php esc_attr_e( 'Import Transcripts', 'chat-importer' ); ?>" /></p>
 			</form>
 			<?php
 		}
-
+		
 		private function import( $file ) {
 			if ( function_exists( 'zip_open' ) && stripos( $file, '.zip' ) !== false ) {
 				if ( $zip_handle = zip_open( $file ) ) {
@@ -157,6 +199,8 @@ if ( class_exists( 'WP_Importer' ) ) {
 		}
 
 		private function import_posts( $chat_contents ) {
+			$raw_transcript = $chat_contents;
+			
 			$chats = array();
 			
 			if ( preg_match( '/^<HTML>/', $chat_contents ) ) {
@@ -225,13 +269,18 @@ if ( class_exists( 'WP_Importer' ) ) {
 					else
 						$title = sprintf( _x( 'Conversation between %1$s, and %2$s', 'The first placeholder is a comma-separated list of usernames; the second placeholder is a single username.', 'chat-importer' ), implode( ', ', array_slice( $usernames, 0, count( $usernames ) - 1 ) ), $usernames[-1] );
 					
+					$title = apply_filters( 'chat_importer_post_title', $title, $usernames, $chat_contents );
+					
 					$this->posts[] = array(
 						'post_title' => $title,
 						'post_date_gmt' => get_gmt_from_date( $timestamp ),
 						'post_date' => $timestamp,
 						'post_content' => $this->chat_markup( $chat_contents ),
-						'post_status' => 'private',
-						'tags' => $usernames,
+						'post_status' => $this->status,
+						'post_category' => array( $this->category ),
+						'post_author' => $this->author,
+						'tags' => $this->autotag ? $usernames : array(),
+						'transcript_raw' => $raw_transcript,
 					);
 				}
 			}
@@ -239,15 +288,17 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 		private function process_posts() {
 			$this->posts = apply_filters( 'wp_import_posts', $this->posts );
-
+			
 			foreach ( $this->posts as $post ) {
 				$post = apply_filters( 'wp_import_post_data_raw', $post );
 				
 				$post_id = wp_insert_post( $post );
 				
-				if ( isset( $post['tags'] ) ) {
+				if ( ! empty( $post['tags'] ) ) {
 					wp_set_post_tags( $post_id, $post['tags'], true );
 				}
+				
+				add_post_meta( $post_id, 'raw_import_data', $post['transcript_raw'] );
 				
 				set_post_format( $post_id, 'chat' );
 			}
