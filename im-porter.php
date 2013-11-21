@@ -335,7 +335,6 @@ if ( class_exists( 'WP_Importer' ) ) {
 			wp_defer_comment_counting( false );
 
 			echo '<p>' . __( 'All done.', 'chat-importer' ) . ' <a href="' . admin_url() . '">' . __( 'Have fun!', 'chat-importer' ) . '</a>' . '</p>';
-			echo '<p>' . __( 'Remember to update the passwords and roles of imported users.', 'chat-importer' ) . '</p>';
 
 			do_action( 'import_end' );
 		}
