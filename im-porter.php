@@ -261,11 +261,13 @@ if ( class_exists( 'WP_Importer' ) ) {
 					}
 				}
 				
+				$usernames = array_values( $usernames );
+				
 				if ( count( $usernames ) > 0 ) {
 					if ( count( $usernames ) == 1 )
 						$title = sprintf( __( 'Conversation with %s', 'chat-importer' ), $usernames[0] );
 					else if ( count( $usernames ) == 2 )
-						$title = sprintf( _x( 'Conversation between %s and %s', 'The two placeholders are each a single username.', 'chat-importer' ), $usernames[0], $usernames[1] );
+						$title = sprintf( _x( 'Conversation between %1$s and %2$s', 'The two placeholders are each a single username.', 'chat-importer' ), $usernames[0], $usernames[1] );
 					else
 						$title = sprintf( _x( 'Conversation between %1$s, and %2$s', 'The first placeholder is a comma-separated list of usernames; the second placeholder is a single username.', 'chat-importer' ), implode( ', ', array_slice( $usernames, 0, count( $usernames ) - 1 ) ), $usernames[-1] );
 					
