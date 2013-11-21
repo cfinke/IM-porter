@@ -12,7 +12,7 @@ Import IM conversation transcripts to WordPress.
 
 Problem: You have years' worth of chat (AIM or MSN) transcripts saved on your computer, and you'd love to stroll down memory lane and reread some of them, but how?  Manually open each one in your browser or chat program?? There's got to be a better way!
 
-Solution: Install <a href="">IM-porter</a>, the WordPress plugin that imports your instant message transcripts to your WordPress blog so you can read through conversations from ages past just as easily as you browse the archives of a blog.
+Solution: Install IM-porter, the WordPress plugin that imports your instant message transcripts to your WordPress blog so you can read through conversations from ages past just as easily as you browse the archives of a blog.
 
 After activating the plugin, visit Tools > Import > Chat Transcripts. Then, you can upload a single transcript or a ZIP of transcripts.
 
