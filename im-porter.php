@@ -31,7 +31,7 @@ if ( ! class_exists( 'WP_Importer' ) ) {
 if ( class_exists( 'WP_Importer' ) ) {
 	class Chat_IMporter_Import extends WP_Importer {
 		var $formats = array();
-		
+
 		var $posts = array();
 
 		var $id = null;
@@ -66,7 +66,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 					$this->status = $_POST['status'] == 'private' ? 'private' : 'public';
 					$this->autotag = isset( $_POST['autotag'] );
 					$this->category = (int) $_POST['cat'];
-					
+
 					set_time_limit( 0 );
 					$this->import();
 				break;
@@ -77,7 +77,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 		function handle_upload() {
 			$original_filename = $_FILES['import']['name'];
-			
+
 			$file = wp_import_handle_upload();
 
 			if ( isset( $file['error'] ) ) {
@@ -105,7 +105,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 			<form action="<?php echo admin_url( 'admin.php?import=chats&step=2' ); ?>" method="post">
 				<?php wp_nonce_field( 'import-chats' ); ?>
 				<input type="hidden" name="import_id" value="<?php echo $this->id; ?>" />
-				
+
 				<table class="form-table">
 					<tbody>
 						<tr>
@@ -159,11 +159,11 @@ if ( class_exists( 'WP_Importer' ) ) {
 			</form>
 			<?php
 		}
-		
+
 		private function import() {
 			$file_path = get_attached_file( $this->id );
 			$original_filename = get_post_meta( $this->id, 'original_filename', true );
-			
+
 			if ( substr( $original_filename, -4, 4 ) == '.zip' && function_exists( 'zip_open' ) ) {
 				if ( $zip_handle = zip_open( $file_path ) ) {
 					while ( $zip_entry = zip_read( $zip_handle ) ) {
@@ -174,7 +174,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 							continue;
 
 						$filesize = zip_entry_filesize( $zip_entry );
-						
+
 						if ( $filesize > 0 && zip_entry_open( $zip_handle, $zip_entry, "r" ) ) {
 							$this->import_file(
 								$filename,
@@ -182,18 +182,18 @@ if ( class_exists( 'WP_Importer' ) ) {
 							);
 						}
 					}
-					
+
 					zip_close( $zip_handle );
 				}
 			}
 			else {
 				$this->import_file( $original_filename, file_get_contents( $file_path ) );
 			}
-			
+
 			$this->process_posts();
 			$this->import_end();
 		}
-		
+
 		private function import_file( $filename, $file_contents ) {
 			$this->import_posts( $file_contents, $filename );
 		}
@@ -239,14 +239,14 @@ if ( class_exists( 'WP_Importer' ) ) {
 						unset( $usernames[$index] );
 					}
 				}
-				
+
 				$usernames = array_values( $usernames );
 				sort( $usernames );
-				
+
 				if ( $this->autotag ) {
 					$tags = array_values( array_unique( array_merge( $tags, $usernames ) ) );
 				}
-				
+
 				if ( count( $usernames ) > 0 ) {
 					if ( count( $usernames ) == 1 )
 						$title = sprintf( __( 'Conversation with %s', 'chat-importer' ), $usernames[0] );
@@ -254,9 +254,9 @@ if ( class_exists( 'WP_Importer' ) ) {
 						$title = sprintf( _x( 'Conversation between %1$s and %2$s', 'The two placeholders are each a single username.', 'chat-importer' ), $usernames[0], $usernames[1] );
 					else
 						$title = sprintf( _x( 'Conversation between %1$s, and %2$s', 'The first placeholder is a comma-separated list of usernames; the second placeholder is a single username.', 'chat-importer' ), implode( ', ', array_slice( $usernames, 0, count( $usernames ) - 1 ) ), $usernames[ count( $usernames ) - 1 ] );
-					
+
 					$title = apply_filters( 'chat_importer_post_title', $title, $usernames, $chat_contents );
-					
+
 					$this->posts[] = array(
 						'post_title' => $title,
 						'post_date_gmt' => get_gmt_from_date( $timestamp ),
@@ -277,17 +277,17 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 			foreach ( $this->posts as $post ) {
 				$post = apply_filters( 'wp_import_post_data_raw', $post );
-				
+
 				$post_id = wp_insert_post( $post );
-				
+
 				echo $post_id . '<br />';
-				
+
 				if ( ! empty( $post['tags'] ) ) {
 					wp_set_post_tags( $post_id, $post['tags'], true );
 				}
-				
+
 				add_post_meta( $post_id, 'raw_import_data', $post['transcript_raw'] );
-				
+
 				set_post_format( $post_id, 'chat' );
 			}
 		}
@@ -307,7 +307,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 			wp_import_upload_form( 'admin.php?import=chats&step=1' );
 			echo '</div>';
 		}
-		
+
 		private function import_end() {
 			wp_import_cleanup( $this->id );
 
@@ -324,7 +324,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 			do_action( 'import_end' );
 		}
-		
+
 		private function chat_markup( $chat, $timestamp = null, $chat_with = null ) {
 			$chat_html = '';
 			$participants = array();
@@ -334,7 +334,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 			foreach ( $lines as $line ) {
 				if ( strpos( $line, ': ' ) !== false ) {
 					list( $prefix, $message ) = array_map( 'trim', explode( ': ', $line, 2 ) );
-					
+
 					if ( preg_match_all( '/\([^\)]+\)$/', $prefix, $parenthetical ) ) {
 						$prefix = trim( str_replace( $parenthetical[0][0], '', $prefix ) ) . ' <time>' . $parenthetical[0][0] . '</time>';
 						$participant = array_shift( explode( ' <time>', $prefix, 2 ) );
@@ -342,9 +342,9 @@ if ( class_exists( 'WP_Importer' ) ) {
 					else {
 						$participant = $prefix;
 					}
-					
+
 					$class = "participant";
-					
+
 					if ( in_array( $participant, $participants ) ) {
 						$class = "participant-" . ( array_search( $participant, $participants ) + 1 );
 					}
@@ -362,9 +362,9 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 			return $chat_html;
 		}
-		
+
 	}
-	
+
 	abstract class Chat_IMporter_Format {
 		/**
 		 * Determine if a given chat is to be handled by this importer.
@@ -374,7 +374,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 		 * @return bool
 		 */
 		abstract static function is_handler( $chat_contents, $filename );
-		
+
 		/**
 		 * Parse a chat transcript.
 		 *
@@ -387,7 +387,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 		 *         (optional) [array tags] An array of string tags to apply to the imported post.
 		 */
 		abstract static function parse( $chat_contents, $filename );
-		
+
 		static function date_from_filename( $filename ) {
 			if ( preg_match( '/([0-9]{4}-[0-9]{2}-[0-9]{2})/', $filename, $date_matches ) ) {
 				return $date_matches[1];
@@ -395,14 +395,14 @@ if ( class_exists( 'WP_Importer' ) ) {
 			else if ( preg_match( '/([0-9]{1,2}-[0-9]{1,2}-[0-9]{2})/', $filename, $date_matches ) ) {
 				$date = $date_matches[1];
 				$date_parts = explode( "-", $date );
-				
+
 				$year = $date_parts[2];
 
 				if ( $year < 60 )
 					$year += 2000;
 				else
 					$year += 1900;
-					
+
 				return sprintf( "%04d-%02d-%02d", intval( $year ), intval( $date_parts[0] ), intval( $date_parts[1] ) );
 			}
 			else {
@@ -410,18 +410,18 @@ if ( class_exists( 'WP_Importer' ) ) {
 			}
 		}
 	}
-	
+
 	class Chat_IMporter_Format_AIM_HTML extends Chat_IMporter_Format {
 		static function is_handler( $chat_contents, $filename ) {
 			if ( preg_match( '/^<HTML>/', $chat_contents ) )
 				return true;
-			
+
 			return false;
 		}
-		
+
 		static function parse( $chat_contents, $filename ) {
 			$chats = array();
-			
+
 			// Find the first timestamp in the chat.
 			if ( preg_match_all( '/\(([0-9]+):([0-9]+):([0-9]+) ([AP]M)\)/', $chat_contents, $time_matches ) ) {
 				if ( $time_matches[4][0] == 'PM' ) {
@@ -440,15 +440,15 @@ if ( class_exists( 'WP_Importer' ) ) {
 			else {
 				$timestamp = self::date_from_filename( $filename ) . ' 00:00:00';
 			}
-		
+
 			$chats[] = array(
 				'timestamp' => strtotime( $timestamp ),
 				'transcript' => self::clean( $chat_contents )
 			);
-			
+
 			return $chats;
 		}
-		
+
 		static function clean( $chat_contents ) {
 			// br2nl
 			$chat_contents = preg_replace( '/\<br(\s*)?\/?\>/i', "\n", $chat_contents );
@@ -458,7 +458,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 			// Strip all tags.
 			$chat_contents = strip_tags( $chat_contents, array( 'hr', 'HR' ) );
-			
+
 			$chat_contents = html_entity_decode( $chat_contents );
 
 			// Remove whitespace-only lines
@@ -478,23 +478,23 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 			return false;
 		}
-		
+
 		static function parse( $chat_contents, $filename ) {
 			$chats = array();
-			
+
 			preg_match_all( '/^Conversation with ([\S]+) at ([^\n]*?) on/', $chat_contents, $matches );
-			
+
 			$timestamp = $matches[2][0];
-			
+
 			$chats[] = array(
 				'timestamp' => strtotime( $timestamp ),
 				'transcript' => array_pop( explode( "\n", $chat_contents, 2 ) ),
 			);
-			
+
 			return $chats;
 		}
 	}
-	
+
 	class Chat_IMporter_Format_MSN extends Chat_IMporter_Format {
 		static function is_handler( $chat_contents, $filename ) {
 			if ( preg_match( '/^<\?xml/', $chat_contents ) )
@@ -502,13 +502,13 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 			return false;
 		}
-		
+
 		/**
 		 * MSN Messenger stores all chats with a contact in a single XML log.
 		 */
 		static function parse( $chat_contents, $filename ) {
 			$chats = array();
-			
+
 			$xml = simplexml_load_string( $chat_contents );
 
 			$last_date = '';
@@ -530,7 +530,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 					$chat_time = (string) $message['Time'];
 					$last_date = $date;
 				}
-				
+
 				$chat_contents .= trim( str_replace( '(E-mail Address Not Verified)', '', (string) $message->From->User['FriendlyName'] ) ) . ' (' . (string) $message['Time'] . '): ' . (string) $message->Text . "\n";
 			}
 
@@ -540,11 +540,11 @@ if ( class_exists( 'WP_Importer' ) ) {
 					'transcript' => $chat_contents,
 				);
 			}
-			
+
 			return $chats;
 		}
 	}
-	
+
 	class Chat_IMporter_Format_Colloquy extends Chat_IMporter_Format {
 		static function is_handler( $chat_contents, $filename ) {
 			if ( preg_match( '/\.colloquyTranscript$/', $filename ) )
@@ -552,18 +552,18 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 			return false;
 		}
-		
+
 		static function parse( $chat_contents, $filename ) {
 			// Note: Dates in Colloquy are formatted like 2008-02-18 11:32:06 -0600, and doing
 			// strtotime on them seems to leave us with GMT times instead of local times.
 			// I think I'm doing something wrong.
-			
+
 			$chats = array();
-			
+
 			$xml = simplexml_load_string( $chat_contents );
 
 			$tags = array();
-			
+
 			if ( $xml['source'] ) {
 				if ( strpos( (string) $xml['source'], '/' ) === false ) {
 					$tags[] = urldecode( (string) $xml['source'] );
@@ -572,35 +572,35 @@ if ( class_exists( 'WP_Importer' ) ) {
 					$tags[] = urldecode( array_pop( explode( '/', (string) $xml['source'] ) ) );
 				}
 			}
-			
+
 			$last_date = '';
 			$chat_time = '';
 			$chat_contents = '';
 			$first_timestamp = '';
-			
+
 			foreach ( $xml->envelope as $envelope ) {
 				foreach ( $envelope->message as $message ) {
 					$timestamp = (string) $message['received'];
-					
+
 					if ( ! $first_timestamp )
 						$first_timestamp = $timestamp;
-				
+
 					$date = date( 'Y-m-d', strtotime( $timestamp ) );
-				
+
 					if ( $date != $last_date ) {
 						if ( $chat_contents ) {
 							$chats[] = array(
 								'timestamp' => get_date_from_gmt( $first_timestamp, 'U' ),
 								'transcript' => $chat_contents
 							);
-							
+
 							$chat_contents = '';
 						}
 
 						$last_date = $date;
 						$first_timestamp = $timestamp;
 					}
-				
+
 					$chat_contents .= trim( (string) $envelope->sender ) . ' (' . get_date_from_gmt( $timestamp, 'g:i:s A' ) . '): ' . strip_tags( (string) self::SimpleXMLElement_innerXML( $message ) ) . "\n";
 				}
 			}
