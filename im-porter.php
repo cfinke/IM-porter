@@ -206,7 +206,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 			$formats = apply_filters( 'chat_importer_formats', array(
 				'Chat_IMporter_Format_AIM_HTML',
 				'Chat_IMporter_Format_AIM_Text',
-				'Chat_IMporter_Format_MSN,
+				'Chat_IMporter_Format_MSN',
 				'Chat_IMporter_Format_Colloquy',
 			) );
 
