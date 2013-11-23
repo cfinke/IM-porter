@@ -202,22 +202,29 @@ if ( class_exists( 'WP_Importer' ) ) {
 			$raw_transcript = $chat_contents;
 
 			$chats = array();
-			
+
+			$formats = apply_filters( 'chat_importer_formats', array(
+				'Chat_IMporter_Format_AIM_HTML',
+				'Chat_IMporter_Format_AIM_Text',
+				'Chat_IMporter_Format_MSN,
+				'Chat_IMporter_Format_Colloquy',
+			) );
+
 			foreach ( $this->formats as $format_class ) {
 				if ( $format_class::is_handler( $chat_contents, $filename ) ) {
 					$chats = $format_class::parse( $chat_contents, $filename );
 				}
 			}
-			
+
 			foreach ( $chats as $chat ) {
 				$chat_contents = $chat['transcript'];
 				$timestamp = date( 'Y-m-d H:i:s', $chat['timestamp'] );
 				$tags = empty( $chat['tags'] ) ? array() : $chat['tags'];
-				
+
 				preg_match_all( '/\n(?<username>[^\(^\n]+) \([^\)\n]+\): /', "\n" . $chat_contents, $username_matches );
-				
+
 				$usernames = array_unique( array_map( 'trim', $username_matches['username'] ) );
-				
+
 				foreach ( $usernames as $index => $username ) {
 					if ( strpos( $usernames[$index], 'Auto response from' ) !== false ) {
 						unset( $usernames[$index] );
@@ -605,30 +612,21 @@ if ( class_exists( 'WP_Importer' ) ) {
 					'tags' => $tags,
 				);
 			}
-			
-			print_r( $chats );
-			die;
+
 			return $chats;
 		}
-		
-		
+
 		static function SimpleXMLElement_innerXML($xml) {
 			$innerXML =  '';
-			
-			foreach (dom_import_simplexml($xml)->childNodes as $child)
+
+			foreach ( dom_import_simplexml($xml)->childNodes as $child )
 				$innerXML .= $child->ownerDocument->saveXML( $child );
 
 			return $innerXML;
 		}
 	}
-	
+
 	$__im_porter = new Chat_IMporter_Import();
-	$__im_porter->register_format( 'Chat_IMporter_Format_AIM_HTML' );
-	$__im_porter->register_format( 'Chat_IMporter_Format_AIM_Text' );
-	$__im_porter->register_format( 'Chat_IMporter_Format_MSN' );
-	$__im_porter->register_format( 'Chat_IMporter_Format_Colloquy' );
-	
-	do_action( 'chat_importer_register_format', $__im_porter );
-	
+
 	register_importer( 'chats', 'Chat Transcripts', __( 'Import chat transcripts (AIM, MSN) as posts.', 'chat-importer' ), array( $__im_porter, 'dispatch' ) );
 }
