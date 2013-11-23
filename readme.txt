@@ -45,6 +45,8 @@ If you want to style your chats like AIM used to display them (like in the scree
 		font-size: x-small;
 	}
 
+To write your own importer for a given transcript format, write a class that implements the functions in `Chat_IMporter_Format` and add it to the array filtered by the `chat_importer_formats` filter.  See `Chat_IMporter_Format_AIM_HTML` for an example.
+
 == Screenshots ==
 
 1. An example of an imported transcript.
