@@ -14,7 +14,7 @@ Currently supports transcripts from:
 * AOL Instant Messenger
 * MSN Messenger
 
-Imported posts are given the 'chat' post format, and you have the option of tagging them with the participants names, making them public or private, and adding them to a category.
+Imported posts are given the 'chat' post format, and you have the option of tagging them with the participants' usernames, making them public or private, and adding them to a category.
 
 The output may not be perfect. (The output will not be perfect.)  The original raw transcript is saved as post meta so the post can be updated later if you want.
 
