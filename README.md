@@ -3,7 +3,7 @@ IM-porter
 
 Import IM conversation transcripts to WordPress.
 
-Problem: You have years' worth of chat (AIM or MSN) transcripts saved on your computer, and you'd love to stroll down memory lane and reread some of them, but how?  Manually open each one in your browser or chat program?? There's got to be a better way!
+Problem: You have years' worth of chat transcripts saved on your computer, and you'd love to stroll down memory lane and reread some of them, but how?  Manually open each one in your browser or chat program?? There's got to be a better way!
 
 Solution: Install IM-porter, the WordPress plugin that imports your instant message transcripts to your WordPress blog so you can read through conversations from ages past just as easily as you browse the archives of a blog.
 
@@ -13,6 +13,7 @@ Currently supports transcripts from:
 
 * AOL Instant Messenger
 * MSN Messenger
+* Colloquy
 
 Imported posts are given the 'chat' post format, and you have the option of tagging them with the participants' usernames, making them public or private, and adding them to a category.
 
