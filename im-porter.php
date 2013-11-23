@@ -162,6 +162,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 		private function import() {
 			$file_path = get_attached_file( $this->id );
+
 			$original_filename = get_post_meta( $this->id, 'original_filename', true );
 
 			if ( substr( $original_filename, -4, 4 ) == '.zip' && function_exists( 'zip_open' ) ) {
@@ -210,7 +211,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 				'Chat_IMporter_Format_Colloquy',
 			) );
 
-			foreach ( $this->formats as $format_class ) {
+			foreach ( $formats as $format_class ) {
 				if ( $format_class::is_handler( $chat_contents, $filename ) ) {
 					$chats = $format_class::parse( $chat_contents, $filename );
 				}
@@ -267,6 +268,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 						'post_author' => $this->author,
 						'tags' => $tags,
 						'transcript_raw' => $raw_transcript,
+						'original_filename' => $filename,
 					);
 				}
 			}
@@ -280,14 +282,13 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 				$post_id = wp_insert_post( $post );
 
-				echo $post_id . '<br />';
-
 				if ( ! empty( $post['tags'] ) ) {
 					wp_set_post_tags( $post_id, $post['tags'], true );
 				}
 
-				add_post_meta( $post_id, 'raw_import_data', $post['transcript_raw'] );
-
+				add_post_meta( $post_id, 'im-porter_raw_transcript', $post['transcript_raw'] );
+				add_post_meta( $post_id, 'im-porter_original_filename', $post['original_filename'] );
+				
 				set_post_format( $post_id, 'chat' );
 			}
 		}
@@ -628,5 +629,5 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 	$__im_porter = new Chat_IMporter_Import();
 
-	register_importer( 'chats', 'Chat Transcripts', __( 'Import chat transcripts (AIM, MSN) as posts.', 'chat-importer' ), array( $__im_porter, 'dispatch' ) );
+	register_importer( 'chats', 'Chat Transcripts', __( 'Import chat transcripts (AIM, MSN, Colloquy) as posts.', 'chat-importer' ), array( $__im_porter, 'dispatch' ) );
 }
