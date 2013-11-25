@@ -30,8 +30,6 @@ if ( ! class_exists( 'WP_Importer' ) ) {
  */
 if ( class_exists( 'WP_Importer' ) ) {
 	class Chat_IMporter_Import extends WP_Importer {
-		var $formats = array();
-
 		var $posts = array();
 
 		var $id = null;
@@ -209,6 +207,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 				'Chat_IMporter_Format_AIM_Text',
 				'Chat_IMporter_Format_MSN',
 				'Chat_IMporter_Format_Colloquy',
+				'Chat_IMporter_Format_Adium',
 			) );
 
 			foreach ( $formats as $format_class ) {
@@ -611,6 +610,49 @@ if ( class_exists( 'WP_Importer' ) ) {
 					'timestamp' => strtotime( $first_timestamp ),
 					'transcript' => $chat_contents,
 					'tags' => $tags,
+				);
+			}
+
+			return $chats;
+		}
+
+		static function SimpleXMLElement_innerXML($xml) {
+			$innerXML =  '';
+
+			foreach ( dom_import_simplexml($xml)->childNodes as $child )
+				$innerXML .= $child->ownerDocument->saveXML( $child );
+
+			return $innerXML;
+		}
+	}
+
+	class Chat_IMporter_Format_Adium extends Chat_IMporter_Format {
+		static function is_handler( $chat_contents, $filename ) {
+			if ( preg_match( '/\.chatlog$/', $filename ) )
+				return true;
+
+			return false;
+		}
+
+		static function parse( $chat_contents, $filename ) {
+			$xml = simplexml_load_string( $chat_contents );
+			
+			$first_timestamp = '';
+			$chat_contents = '';
+			
+			foreach ( $xml->message as $message ) {
+				$timestamp = (string) $message['time'];
+
+				if ( ! $first_timestamp )
+					$first_timestamp = $timestamp;
+
+				$chat_contents .= trim( (string) $message['sender'] ) . ' (' . date( 'g:i:s A', strtotime( $timestamp ) ) . '): ' . strip_tags( (string) self::SimpleXMLElement_innerXML( $message ) ) . "\n";
+			}
+
+			if ( $chat_contents ) {
+				$chats[] = array(
+					'timestamp' => strtotime( $first_timestamp ),
+					'transcript' => $chat_contents,
 				);
 			}
 

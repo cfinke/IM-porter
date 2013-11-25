@@ -14,6 +14,7 @@ Currently supports transcripts from:
 * AOL Instant Messenger
 * MSN Messenger
 * Colloquy
+* Adium
 
 Imported posts are given the 'chat' post format, and you have the option of tagging them with the participants' usernames, making them public or private, and adding them to a category.
 
