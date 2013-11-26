@@ -5,6 +5,7 @@ Requires at least: 3.5
 Tested up to: 3.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Stable Tag: 1.0
 
 Import IM conversation transcripts to WordPress.
 
@@ -51,3 +52,9 @@ To write your own importer for a given transcript format, write a class that imp
 == Screenshots ==
 
 1. An example of an imported transcript.
+
+== Changelog ==
+
+1.0
+---
+Support for Adium, AOL Instant Messenger, Colloquy, and MSN Messenger
