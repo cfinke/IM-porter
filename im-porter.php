@@ -514,7 +514,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 	class Chat_IMporter_Format_MSN extends Chat_IMporter_Format {
 		static function is_handler( $chat_contents, $filename ) {
-			if ( preg_match( '/^<\?xml/', $chat_contents ) )
+			if ( preg_match( '/\.xml$/', $filename ) && strpos( $chat_contents, 'MessageLog.xsl' ) !== false )
 				return true;
 
 			return false;
