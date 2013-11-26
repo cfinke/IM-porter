@@ -38,6 +38,8 @@ if ( class_exists( 'WP_Importer' ) ) {
 		var $autotag = false;
 		var $category = null;
 
+		var $file_count = 0;
+
 		public function register_format( $format_class ) {
 			$this->formats[] = $format_class;
 		}
@@ -175,10 +177,17 @@ if ( class_exists( 'WP_Importer' ) ) {
 						$filesize = zip_entry_filesize( $zip_entry );
 
 						if ( $filesize > 0 && zip_entry_open( $zip_handle, $zip_entry, "r" ) ) {
+							$before_post_count = count( $this->posts );
 							$this->import_file(
 								$filename,
 								zip_entry_read( $zip_entry, $filesize )
 							);
+							$after_post_count = count( $this->posts );
+
+							if ( $after_post_count == $before_post_count )
+								echo '<p>' . esc_html( sprintf( _x( 'No posts imported from %s.', 'Placeholder is a filename.', 'chat-importer' ), $filename ) ) . '</p>';
+
+							++$this->file_count;
 						}
 					}
 
@@ -186,6 +195,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 				}
 			}
 			else {
+				$this->file_count = 1;
 				$this->import_file( $original_filename, file_get_contents( $file_path ) );
 			}
 
@@ -287,7 +297,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 				add_post_meta( $post_id, 'im-porter_raw_transcript', $post['transcript_raw'] );
 				add_post_meta( $post_id, 'im-porter_original_filename', $post['original_filename'] );
-				
+
 				set_post_format( $post_id, 'chat' );
 			}
 		}
@@ -320,7 +330,14 @@ if ( class_exists( 'WP_Importer' ) ) {
 			wp_defer_term_counting( false );
 			wp_defer_comment_counting( false );
 
-			echo '<p>' . __( 'All done.', 'chat-importer' ) . ' <a href="' . admin_url() . '">' . __( 'Have fun!', 'chat-importer' ) . '</a>' . '</p>';
+			if ( $this->file_count == 1 ) {
+				echo '<p>' . sprintf( _n( 'One chat imported from one file.', '%s chats imported from one file.', count( $this->posts ), 'chat-importer' ), number_format( count( $this->posts ) ) ) . '</p>';
+			}
+			else {
+				echo '<p>' . sprintf( _n( '%1$s chat imported from %2$s$2%s files.', '%1$s chats imported from %2$s files.', count( $this->posts ), 'chat-importer' ), number_format( count( $this->posts ) ), number_format( $this->file_count ) ) . '</p>';
+			}
+
+			echo '<p><a href="' . admin_url( 'edit.php' ) . '">' . __( 'Have fun!', 'chat-importer' ) . '</a>' . '</p>';
 
 			do_action( 'import_end' );
 		}
