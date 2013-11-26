@@ -644,6 +644,10 @@ if ( class_exists( 'WP_Importer' ) ) {
 	}
 
 	class Chat_IMporter_Format_Adium extends Chat_IMporter_Format {
+		static $chat_contents = '';
+		static $timestamp = 0;
+		static $current_message = '';
+
 		static function is_handler( $chat_contents, $filename ) {
 			if ( preg_match( '/\.chatlog$/', $filename ) )
 				return true;
@@ -652,41 +656,65 @@ if ( class_exists( 'WP_Importer' ) ) {
 		}
 
 		static function parse( $chat_contents, $filename ) {
-			$xml = simplexml_load_string( $chat_contents );
-			
-			$first_timestamp = '';
-			$chat_contents = '';
-			
-			foreach ( $xml->message as $message ) {
-				$timestamp = (string) $message['time'];
+			$xml_parser = xml_parser_create();
+			xml_parser_set_option( $xml_parser, XML_OPTION_SKIP_WHITE, 1 ); 
+			xml_set_default_handler( $xml_parser, array( self, "defaultHandler" ) );
+			xml_set_element_handler( $xml_parser, array( self, "startElement" ), array( self, "endElement" ) );
 
-				if ( ! $first_timestamp )
-					$first_timestamp = $timestamp;
+			$string_location = 0;
 
-				$chat_contents .= trim( (string) $message['sender'] ) . ' (' . date( 'g:i:s A', strtotime( $timestamp ) ) . '): ' . strip_tags( (string) self::SimpleXMLElement_innerXML( $message ) ) . "\n";
+			while ( $data = substr( $chat_contents, $string_location, 100 ) ) {
+				$string_location += 100;
+
+				if ( ! xml_parse( $xml_parser, $data, ( $string_location + 100 ) >= strlen( $chat_contents ) ) ) {
+					// echo '<p>' . xml_error_string( xml_get_error_code( $xml_parser ) ) . '</p>';
+					self::endElement( $xml_parser, 'MESSAGE' );
+					break;
+				}
 			}
 
-			if ( $chat_contents ) {
+			xml_parser_free( $xml_parser );
+
+			if ( self::$chat_contents ) {
 				$chats[] = array(
-					'timestamp' => strtotime( $first_timestamp ),
-					'transcript' => $chat_contents,
+					'timestamp' => strtotime( self::$timestamp ),
+					'transcript' => self::$chat_contents,
 				);
 			}
+
+			self::$chat_contents = '';
+			self::$current_message = '';
+			self::$timestamp = 0;
 
 			return $chats;
 		}
 
-		static function SimpleXMLElement_innerXML($xml) {
-			$innerXML =  '';
+		static function startElement( $parser, $name, $attrs ) {
+			if ( 'MESSAGE' == $name ) {
+				if ( ! self::$timestamp ) {
+					self::$timestamp = $attrs['TIME'];
+				}
 
-			foreach ( dom_import_simplexml($xml)->childNodes as $child )
-				$innerXML .= $child->ownerDocument->saveXML( $child );
+				self::$chat_contents .= sprintf( "%s (%s): ", trim( $attrs['SENDER'] ),  date( 'g:i:s A', strtotime( $attrs['TIME'] ) ) );
+			}
+		}
 
-			return $innerXML;
+		static function endElement( $parser, $name ) {
+			if ( self::$current_message ) {
+				self::$chat_contents .= trim( strip_tags( self::$current_message ), "\n\r" );
+				self::$current_message = '';
+			}
+
+			if ( 'MESSAGE' == $name )
+				self::$chat_contents .= "\n";
+		}
+
+		static function defaultHandler( $parser, $data ) {
+			self::$current_message .= $data;
 		}
 	}
 
 	$__im_porter = new Chat_IMporter_Import();
 
-	register_importer( 'chats', 'Chat Transcripts', __( 'Import chat transcripts (AIM, MSN, Colloquy) as posts.', 'chat-importer' ), array( $__im_porter, 'dispatch' ) );
+	register_importer( 'chats', 'Chat Transcripts', __( 'Import chat transcripts (AIM, MSN, Colloquy, Adium) as posts.', 'chat-importer' ), array( $__im_porter, 'dispatch' ) );
 }
