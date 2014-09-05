@@ -4,7 +4,7 @@
 Plugin Name: IM-porter
 Description: Import chat transcripts into WordPress.
 Author: cfinke
-Version: 1.0
+Version: 1.0.1
 License: GPLv2 or later
 */
 
