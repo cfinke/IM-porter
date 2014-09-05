@@ -382,7 +382,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 	}
 
-	abstract class Chat_IMporter_Format {
+	class Chat_IMporter_Format {
 		/**
 		 * Determine if a given chat is to be handled by this importer.
 		 *
@@ -390,7 +390,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 		 * @param string $filename The original filename of the uploaded file.
 		 * @return bool
 		 */
-		abstract static function is_handler( $chat_contents, $filename );
+		static function is_handler( $chat_contents, $filename ) { }
 
 		/**
 		 * Parse a chat transcript.
@@ -403,7 +403,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 		 *                             username (12:34:56 PM): This is the message that was sent.
 		 *         (optional) [array tags] An array of string tags to apply to the imported post.
 		 */
-		abstract static function parse( $chat_contents, $filename );
+		static function parse( $chat_contents, $filename ) { }
 
 		static function date_from_filename( $filename ) {
 			if ( preg_match( '/([0-9]{4}-[0-9]{2}-[0-9]{2})/', $filename, $date_matches ) ) {
