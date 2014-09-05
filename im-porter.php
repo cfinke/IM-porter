@@ -36,7 +36,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 		var $author = null;
 		var $status = null;
 		var $autotag = false;
-		var $category = null;
+		var $categories = null;
 
 		var $file_count = 0;
 
@@ -65,7 +65,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 					$this->author = (int) $_POST['author'];
 					$this->status = $_POST['status'] == 'private' ? 'private' : 'public';
 					$this->autotag = isset( $_POST['autotag'] );
-					$this->category = (int) $_POST['cat'];
+					$this->categories = isset( $_POST['cat'] ) ? array( (int) $_POST['cat'] ) : array();
 
 					set_time_limit( 0 );
 					$this->import();
@@ -273,7 +273,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 						'post_date' => $timestamp,
 						'post_content' => $this->chat_markup( $chat_contents ),
 						'post_status' => $this->status,
-						'post_category' => array( $this->category ),
+						'post_category' => $this->categories,
 						'post_author' => $this->author,
 						'tags' => $tags,
 						'transcript_raw' => $raw_transcript,
