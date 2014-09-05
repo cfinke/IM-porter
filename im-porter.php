@@ -354,7 +354,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 
 					if ( preg_match_all( '/\([^\)]+\)$/', $prefix, $parenthetical ) ) {
 						$prefix = trim( str_replace( $parenthetical[0][0], '', $prefix ) ) . ' <time>' . $parenthetical[0][0] . '</time>';
-						$participant = array_shift( explode( ' <time>', $prefix, 2 ) );
+						list( $participant, $unused ) = explode( ' <time>', $prefix, 2 );
 					}
 					else {
 						$participant = $prefix;
@@ -502,10 +502,11 @@ if ( class_exists( 'WP_Importer' ) ) {
 			preg_match_all( '/^Conversation with ([\S]+) at ([^\n]*?) on/', $chat_contents, $matches );
 
 			$timestamp = $matches[2][0];
+			list( $transcript, $unused ) = explode( "\n", $chat_contents, 2 );
 
 			$chats[] = array(
 				'timestamp' => strtotime( $timestamp ),
-				'transcript' => array_pop( explode( "\n", $chat_contents, 2 ) ),
+				'transcript' => $transcript,
 			);
 
 			return $chats;
@@ -586,7 +587,9 @@ if ( class_exists( 'WP_Importer' ) ) {
 					$tags[] = urldecode( (string) $xml['source'] );
 				}
 				else {
-					$tags[] = urldecode( array_pop( explode( '/', (string) $xml['source'] ) ) );
+					list( $tag, $unused ) = explode( '/', (string) $xml['source'], 2 );
+
+					$tags[] = urldecode( $tag );
 				}
 			}
 
